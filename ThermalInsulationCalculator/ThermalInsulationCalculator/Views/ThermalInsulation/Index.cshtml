@@ -1,0 +1,124 @@
+﻿<link rel="stylesheet" href="~/css/site.css">
+@model global::ThermalInsulationCalculator.Models.ThermalInsulationCalculator
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<h2>Расчет теплоизоляции трубопровода</h2>
+
+
+@using (Html.BeginForm("Calculate", "ThermalInsulation", FormMethod.Post))
+{
+    <div>
+        <label asp-for="Lambda0">Коэффициент теплопроводности трубы (Вт/м°C):</label>
+        <input asp-for="Lambda0" type="number" step="0.0001" value="@Model.Lambda0" />
+    </div>
+    <div>
+        <label asp-for="Lambda1">Коэффициент теплопроводности 1-го материала (Вт/м°C):</label>
+        <input asp-for="Lambda1" type="number" step="0.0001" value="@Model.Lambda1" />
+    </div>
+    <div>
+        <label asp-for="Lambda2">Коэффициент теплопроводности 2-го материала (Вт/м°C):</label>
+        <input asp-for="Lambda2" type="number" step="0.0001" value="@Model.Lambda2" />
+    </div>
+    <div>
+        <label asp-for="C1">Стоимость 1-го материала (усл.ед./м³):</label>
+        <input asp-for="C1" type="number" step="0.0001" value="@Model.C1" />
+    </div>
+    <div>
+        <label asp-for="C2">Стоимость 2-го материала (усл.ед./м³):</label>
+        <input asp-for="C2" type="number" step="0.0001" value="@Model.C2" />
+    </div>
+    <div>
+        <label asp-for="X0">Суммарная толщина изоляции (мм):</label>
+        <input asp-for="X0" type="number" step="0.0001" value="@Model.X0" />
+    </div>
+    <div>
+        <label asp-for="D1">Внутренний диаметр трубы (мм):</label>
+        <input asp-for="D1" type="number" step="0.0001" value="@Model.D1" />
+    </div>
+    <div>
+        <label asp-for="D2">Внешний диаметр трубы (мм):</label>
+        <input asp-for="D2" type="number" step="0.0001" value="@Model.D2" />
+    </div>
+    <div>
+        <label asp-for="TEnv">Температура окружающей среды (°C):</label>
+        <input asp-for="TEnv" type="number" value="@Model.TEnv" />
+    </div>
+    <div>
+        <label asp-for="TLiquid">Температура жидкости (°C):</label>
+        <input asp-for="TLiquid" type="number" value="@Model.TLiquid" />
+    </div>
+    <div>
+        <label asp-for="TMax">Максимальная температура (°C):</label>
+        <input asp-for="TMax" type="number" value="@Model.TMax" />
+    </div>
+    <div>
+        <label asp-for="AlphaInner">Коэффициент теплоотдачи внутренний (Вт/(м^2 * °С)):</label>
+        <input asp-for="AlphaInner" type="number" step="0.0001" value="@Model.AlphaInner" />
+    </div>
+    <div>
+        <label asp-for="AlphaOuter">Коэффициент теплоотдачи наружный (Вт/(м^2 * °С)):</label>
+        <input asp-for="AlphaOuter" type="number" step="0.0001" value="@Model.AlphaOuter" />
+    </div>
+    <button type="submit" value="Calculate">Рассчитать</button>
+
+}
+
+@if (ViewBag.OptimalX1 != null)
+{
+    <link rel="stylesheet" href="@(nameof(ThermalInsulationCalculator)).styles.css">
+     <div class="results">
+        <h3>Результаты</h3>
+        <p>Оптимальная толщина слоя 1: @ViewBag.OptimalX1 м</p>
+        <p>Оптимальная толщина слоя 2: @ViewBag.OptimalX2 м</p>
+        <p>Минимальная стоимость: @ViewBag.MinCost усл.ед./м</p>
+        <p>Линейный коэффициент теплопередачи для многослойной цилиндрической стенки: @ViewBag.K Вт/(м^2 * °С)</p>
+        <p>Тепловой поток через изоляцию: @ViewBag.q Вт/(м * °С)</p>
+        <p>Температура наружной поверхности изоляции: @ViewBag.TOut °С</p>
+
+        <h3>График оптимальных толщин</h3>
+        <canvas id="thicknessChart" width="400" height="200"></canvas>
+
+        <script>
+            // Переменная для хранения ссылки на график
+            var thicknessChart;
+
+            // Функция для создания графика
+            function createChart() {
+                var ctx = document.getElementById('thicknessChart').getContext('2d');
+
+                // Если график уже существует, уничтожаем его
+                if (thicknessChart) {
+                    thicknessChart.destroy();
+                }
+
+                // Создаём новый график
+                thicknessChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Толщина слоя 1 (x1)', 'Толщина слоя 2 (x2)'],
+                        datasets: [{
+                            label: 'Оптимальные толщины (м)',
+                            data: [@ViewBag.X1, @ViewBag.X2],
+                            backgroundColor: ['rgba(54, 162, 235, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+                            borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Вызываем функцию создания графика после загрузки страницы
+            document.addEventListener('DOMContentLoaded', createChart);
+        </script>
+    </div>
+}
+
+
